@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Administración de Propiedades - GESTIÓN EXCEL</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-main: #1e1b26; --bg-panel: #2a263d; --accent-orange: #ff8c00;
+            --text-main: #ffffff; --text-secondary: #c3c3c3; --border-color: #4a4a6a;
+            --success-color: #28a745; --danger-color: #dc3545; --info-color: #17a2b8;
+            --font-main: 'Roboto', sans-serif; --font-logo: 'Anton', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
+        body {
+            font-family: var(--font-main); background-color: var(--bg-main);
+            color: var(--text-main); display: flex; height: 100vh; overflow: hidden;
+        }
+
+        /* --- LAYOUT --- */
+        .sidebar {
+            width: 260px; background-color: var(--bg-panel); padding: 1.5rem 1rem;
+            display: flex; flex-direction: column; position: fixed; height: 100%;
+            border-right: 1px solid var(--border-color); z-index: 100;
+        }
+        .main-content {
+            flex-grow: 1; margin-left: 260px; padding: 2rem;
+            overflow-y: auto; height: 100vh;
+        }
+
+        /* --- SIDEBAR & BRANDING --- */
+        .brand-container { text-align: center; margin-bottom: 2.5rem; }
+        #brand-logo {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 3px solid var(--accent-orange); object-fit: cover; margin-bottom: 1rem;
+        }
+        .brand-name #brand-name-part1 {
+            font-family: var(--font-logo); font-size: 2.5rem;
+            color: var(--text-main); line-height: 1; display: block;
+        }
+        .brand-name #brand-name-part2 {
+            font-family: var(--font-main); font-weight: 700; font-size: 1.5rem;
+            color: var(--accent-orange); letter-spacing: 1px; display: block;
+        }
+        .main-nav ul { list-style: none; }
+        .main-nav li a {
+            display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1rem;
+            color: var(--text-secondary); text-decoration: none; border-radius: 8px;
+            margin-bottom: 0.5rem; transition: background-color 0.3s, color 0.3s; font-weight: 500;
+        }
+        .main-nav li a:hover { background-color: rgba(255, 140, 0, 0.1); color: var(--text-main); }
+        .main-nav li a.active { background-color: var(--accent-orange); color: var(--bg-panel); font-weight: 700; }
+        .main-nav li a i { width: 20px; text-align: center; }
+        .sidebar-footer {
+            margin-top: auto; text-align: center; padding: 1rem 0;
+            font-size: 0.8rem; color: var(--text-secondary);
+        }
+
+        /* --- PANELES Y ANIMACIÓN --- */
+        .content-panel { display: none; }
+        .content-panel.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- COMPONENTES GENERALES --- */
+        .card {
+            background-color: var(--bg-panel); padding: 1.5rem 2rem;
+            border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--border-color);
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);
+        }
+        .card-header h2 {
+            font-family: var(--font-logo); color: var(--accent-orange);
+            font-size: 2rem; letter-spacing: 1px;
+        }
+        .btn {
+            padding: 0.7rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;
+            font-family: var(--font-main); font-weight: 700; font-size: 0.9rem;
+            transition: transform 0.2s, box-shadow 0.2s; display: inline-flex;
+            align-items: center; gap: 0.5rem;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+        .btn-primary { background-color: var(--accent-orange); color: var(--bg-panel); }
+        .btn-danger { background-color: var(--danger-color); color: var(--text-main); }
+        .btn-info { background-color: var(--info-color); color: var(--text-main); }
+        .btn-success { background-color: var(--success-color); color: var(--text-main); }
+        .btn-secondary { background-color: var(--border-color); color: var(--text-main); }
+
+        /* --- TABLAS --- */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        thead th {
+            color: var(--accent-orange); text-align: left; padding: 1rem; font-size: 0.9rem;
+            text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--accent-orange);
+        }
+        tbody tr { transition: background-color 0.3s; }
+        tbody tr:hover { background-color: rgba(42, 38, 61, 0.8); }
+        tbody td {
+            padding: 1rem; border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary); vertical-align: middle;
+        }
+        tbody td:first-child { color: var(--text-main); font-weight: 500; }
+        .actions-cell { display: flex; gap: 0.5rem; flex-wrap: nowrap; }
+        .actions-cell .btn { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+        .debt-cell { font-weight: 700; color: var(--danger-color) !important; }
+        .paid-cell { font-weight: 700; color: var(--success-color) !important; }
+
+        /* --- MODALES --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); display: none;
+            justify-content: center; align-items: center; z-index: 1001;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background-color: var(--bg-panel); padding: 2rem; border-radius: 12px;
+            width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;
+            border: 1px solid var(--border-color); animation: fadeInModal 0.3s ease-out;
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);
+        }
+        .modal-header h3 { font-family: var(--font-logo); font-size: 1.8rem; color: var(--accent-orange); }
+        .close-modal {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 1.5rem; cursor: pointer; transition: color 0.2s;
+        }
+        .close-modal:hover { color: var(--text-main); }
+        .modal-footer { margin-top: 2rem; text-align: right; display: flex; gap: 1rem; justify-content: flex-end; }
+        
+        /* --- FORMULARIOS --- */
+        .form-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem; }
+        .form-group input, .form-group select {
+            background-color: var(--bg-main); border: 2px solid var(--border-color);
+            color: var(--text-main); padding: 0.8rem; border-radius: 8px;
+            font-family: var(--font-main); font-size: 1rem; transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-orange); }
+        .form-section-title {
+            font-size: 1.2rem; color: var(--accent-orange); margin-top: 1.5rem;
+            margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);
+        }
+
+        /* --- DASHBOARD (RESUMEN) --- */
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;
+        }
+        .kpi-card {
+            background-color: var(--bg-panel); padding: 1.5rem; border-radius: 12px;
+            display: flex; align-items: center; gap: 1.5rem;
+            border-left: 5px solid var(--accent-orange);
+        }
+        .kpi-card .icon { font-size: 2.5rem; color: var(--accent-orange); }
+        .kpi-card .info .value { font-size: 2rem; font-weight: 700; color: var(--text-main); }
+        .kpi-card .info .label { font-size: 0.9rem; color: var(--text-secondary); }
+        .kpi-card.success { border-left-color: var(--success-color); }
+        .kpi-card.success .icon { color: var(--success-color); }
+        .kpi-card.danger { border-left-color: var(--danger-color); }
+        .kpi-card.danger .icon { color: var(--danger-color); }
+
+        /* --- MODAL DE DETALLES --- */
+        .details-section { margin-bottom: 1.5rem; }
+        .details-section h4 {
+            font-size: 1.2rem; color: var(--accent-orange); margin-bottom: 1rem;
+            padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);
+        }
+        .details-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;
+        }
+        .detail-item .label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; }
+        .detail-item .value { font-size: 1rem; color: var(--text-main); font-weight: 500; }
+    
+@media (max-width: 768px) {
+    body { flex-direction: column; overflow: auto; }
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        padding: 1rem;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+        height: auto;
+    }
+    .main-nav li a {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    .form-grid, .kpi-grid, .details-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .modal-content {
+        width: 95%;
+    }
+    table { font-size: 0.9rem; }
+}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log("Service Worker registrado con éxito"))
+      .catch(error => console.error("Error al registrar Service Worker:", error));
+  }
+</script>
+</head>
+<body>
+
+    <!-- ======================== BARRA LATERAL (SIDEBAR) ======================== -->
+    <aside class="sidebar">
+        <div class="brand-container">
+            <img id="brand-logo" src="icon-512.png" alt="Logo">
+            <div class="brand-name">
+                <span id="brand-name-part1">GESTIÓN</span>
+                <span id="brand-name-part2">EXCEL</span>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#" class="nav-link active" data-target="panel-resumen"><i class="fas fa-tachometer-alt"></i> Resumen</a></li>
+                <li><a href="#" class="nav-link" data-target="panel-propiedades"><i class="fas fa-building"></i> Propiedades</a></li>
+                <li><a href="#" class="nav-link" data-target="panel-configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="footer-brand-name1">GESTIÓN</span> <span id="footer-brand-name2" style="color: var(--accent-orange);">EXCEL</span>
+        </div>
+    </aside>
+
+    <!-- ======================== CONTENIDO PRINCIPAL ======================== -->
+    <main class="main-content">
+
+        <!-- Panel de Resumen (Dashboard) -->
+        <div id="panel-resumen" class="content-panel active">
+            <div class="card-header" style="border: none; padding-bottom: 0; margin-bottom: 2rem;">
+                <h2><i class="fas fa-chart-line"></i> Panel de Control</h2>
+            </div>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="icon"><i class="fas fa-city"></i></div>
+                    <div class="info">
+                        <div class="value" id="kpi-total-propiedades">0</div>
+                        <div class="label">Total de Propiedades</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon"><i class="fas fa-file-signature"></i></div>
+                    <div class="info">
+                        <div class="value" id="kpi-propiedades-alquiladas">0</div>
+                        <div class="label">Propiedades Alquiladas</div>
+                    </div>
+                </div>
+                <div class="kpi-card success">
+                    <div class="icon"><i class="fas fa-hand-holding-usd"></i></div>
+                    <div class="info">
+                        <div class="value" id="kpi-ingresos-mes">AR$ 0</div>
+                        <div class="label">Ingresos del Mes</div>
+                    </div>
+                </div>
+                <div class="kpi-card danger">
+                    <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="info">
+                        <div class="value" id="kpi-deuda-total">AR$ 0</div>
+                        <div class="label">Deuda Total Acumulada</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Propiedades -->
+        <div id="panel-propiedades" class="content-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-list-ul"></i> Listado de Propiedades</h2>
+                    <button class="btn btn-primary" id="btn-open-modal-add">
+                        <i class="fas fa-plus"></i> Agregar Propiedad
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table id="tabla-propiedades">
+                        <thead>
+                            <tr>
+                                <th>Dirección</th>
+                                <th>Inquilino</th>
+                                <th>Alquiler</th>
+                                <th>Deuda Mes Actual</th>
+                                <th>Fin Contrato</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Configuración -->
+        <div id="panel-configuracion" class="content-panel">
+            <div class="card">
+                <div class="card-header"><h2><i class="fas fa-paint-brush"></i> Personalización de Marca</h2></div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="config-name1">Nombre Principal</label>
+                        <input type="text" id="config-name1" placeholder="GESTIÓN">
+                    </div>
+                    <div class="form-group">
+                        <label for="config-name2">Nombre Secundario</label>
+                        <input type="text" id="config-name2" placeholder="EXCEL">
+                    </div>
+                    <div class="form-group">
+                        <label for="config-logo">Cambiar Logo</label>
+                        <input type="file" id="config-logo" accept="image/*" style="padding: 0.6rem; background-color: var(--bg-main);">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ======================== MODALES ======================== -->
+
+    <!-- Modal para Agregar/Editar Propiedad -->
+    <div id="property-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Agregar Nueva Propiedad</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <form id="form-propiedad">
+                <input type="hidden" id="prop-id">
+                
+                <h4 class="form-section-title">Datos de la Propiedad</h4>
+                <div class="form-grid">
+                    <div class="form-group"><label for="prop-direccion">Dirección</label><input type="text" id="prop-direccion" required></div>
+                    <div class="form-group"><label for="prop-tipo">Tipo</label><select id="prop-tipo"><option>Departamento</option><option>Casa</option><option>Local</option><option>Oficina</option></select></div>
+                </div>
+
+                <h4 class="form-section-title">Datos del Inquilino</h4>
+                <div class="form-grid">
+                    <div class="form-group"><label for="inq-nombre">Nombre Completo</label><input type="text" id="inq-nombre" required></div>
+                    <div class="form-group"><label for="inq-dni">DNI</label><input type="text" id="inq-dni"></div>
+                    <div class="form-group"><label for="inq-tel">Teléfono</label><input type="tel" id="inq-tel"></div>
+                    <div class="form-group"><label for="inq-email">Email</label><input type="email" id="inq-email"></div>
+                </div>
+
+                <h4 class="form-section-title">Datos del Contrato</h4>
+                <div class="form-grid">
+                    <div class="form-group"><label for="cont-inicio">Inicio</label><input type="date" id="cont-inicio" required></div>
+                    <div class="form-group"><label for="cont-fin">Fin</label><input type="date" id="cont-fin" required></div>
+                    <div class="form-group"><label for="val-alquiler">Alquiler Base (AR$)</label><input type="number" id="val-alquiler" required></div>
+                </div>
+
+                <h4 class="form-section-title">Servicios y Gastos Mensuales (AR$)</h4>
+                <div class="form-grid">
+                    <div class="form-group"><label for="serv-expensas">Expensas</label><input type="number" id="serv-expensas" value="0"></div>
+                    <div class="form-group"><label for="serv-agua">Agua</label><input type="number" id="serv-agua" value="0"></div>
+                    <div class="form-group"><label for="serv-luz">Luz</label><input type="number" id="serv-luz" value="0"></div>
+                    <div class="form-group"><label for="serv-gas">Gas</label><input type="number" id="serv-gas" value="0"></div>
+                    <div class="form-group"><label for="serv-municipal">Municipal</label><input type="number" id="serv-municipal" value="0"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Registrar Pago -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Registrar Pago</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <form id="form-payment">
+                <input type="hidden" id="payment-prop-id">
+                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Registrando pago para: <strong id="payment-prop-address" style="color: var(--text-main);"></strong></p>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label for="payment-amount">Monto (AR$)</label>
+                        <input type="number" id="payment-amount" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payment-date">Fecha de Pago</label>
+                        <input type="date" id="payment-date" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="payment-concept">Concepto</label>
+                    <input type="text" id="payment-concept" placeholder="Ej: Alquiler Julio, Pago parcial servicios" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Registrar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Ver Detalles -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="details-address">Detalles de la Propiedad</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div id="details-content"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- ESTADO GLOBAL Y DATOS ---
+    let propiedades = [];
+
+    // --- SELECTORES DEL DOM ---
+    const navLinks = document.querySelectorAll('.nav-link');
+    const contentPanels = document.querySelectorAll('.content-panel');
+    const tablaPropiedadesBody = document.querySelector('#tabla-propiedades tbody');
+    
+    // Modales
+    const propertyModal = document.getElementById('property-modal');
+    const paymentModal = document.getElementById('payment-modal');
+    const detailsModal = document.getElementById('details-modal');
+    const allModals = document.querySelectorAll('.modal');
+
+    // --- FUNCIONES AUXILIARES ---
+    const formatCurrency = (value) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value);
+    const formatDate = (dateString) => dateString ? new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR') : 'N/A';
+
+    // --- LÓGICA DE NAVEGACIÓN Y MODALES ---
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navLinks.forEach(l => l.classList.remove('active'));
+            contentPanels.forEach(p => p.classList.remove('active'));
+            link.classList.add('active');
+            document.getElementById(link.dataset.target)?.classList.add('active');
+        });
+    });
+
+    const openModal = (modal) => modal.classList.add('active');
+    const closeModal = (modal) => modal.classList.remove('active');
+
+    allModals.forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.classList.contains('close-modal')) {
+                closeModal(modal);
+            }
+        });
+    });
+    document.getElementById('btn-open-modal-add').addEventListener('click', () => {
+        document.getElementById('form-propiedad').reset();
+        document.getElementById('prop-id').value = '';
+        document.getElementById('modal-title').textContent = 'Agregar Nueva Propiedad';
+        openModal(propertyModal);
+    });
+
+    // --- LÓGICA DE CÁLCULO ---
+    const calcularDeudaMesActual = (prop) => {
+        const hoy = new Date();
+        const mesActual = hoy.getMonth();
+        const anioActual = hoy.getFullYear();
+
+        const totalGastosMensuales = parseFloat(prop.contrato.alquilerBase) +
+            Object.values(prop.servicios).reduce((sum, val) => sum + parseFloat(val || 0), 0);
+
+        const pagosEsteMes = prop.pagos
+            .filter(pago => {
+                const fechaPago = new Date(pago.fecha + 'T00:00:00');
+                return fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === anioActual;
+            })
+            .reduce((sum, pago) => sum + parseFloat(pago.monto), 0);
+
+        const deuda = totalGastosMensuales - pagosEsteMes;
+        return deuda > 0 ? deuda : 0;
+    };
+
+    // --- LÓGICA DE RENDERIZADO ---
+    const actualizarResumen = () => {
+        const totalPropiedades = propiedades.length;
+        const propiedadesAlquiladas = propiedades.filter(p => p.inquilino.nombre).length;
+        
+        const hoy = new Date();
+        const mesActual = hoy.getMonth();
+        const anioActual = hoy.getFullYear();
+
+        const ingresosMes = propiedades.flatMap(p => p.pagos)
+            .filter(pago => {
+                const fechaPago = new Date(pago.fecha + 'T00:00:00');
+                return fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === anioActual;
+            })
+            .reduce((sum, pago) => sum + parseFloat(pago.monto), 0);
+
+        const deudaTotal = propiedades.reduce((sum, prop) => sum + calcularDeudaMesActual(prop), 0);
+
+        document.getElementById('kpi-total-propiedades').textContent = totalPropiedades;
+        document.getElementById('kpi-propiedades-alquiladas').textContent = propiedadesAlquiladas;
+        document.getElementById('kpi-ingresos-mes').textContent = formatCurrency(ingresosMes);
+        document.getElementById('kpi-deuda-total').textContent = formatCurrency(deudaTotal);
+    };
+
+    const renderizarTabla = () => {
+        tablaPropiedadesBody.innerHTML = '';
+        propiedades.forEach(prop => {
+            const deuda = calcularDeudaMesActual(prop);
+            const deudaCellClass = deuda > 0 ? 'debt-cell' : 'paid-cell';
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${prop.direccion}</td>
+                <td>${prop.inquilino.nombre || 'Sin inquilino'}</td>
+                <td>${formatCurrency(prop.contrato.alquilerBase)}</td>
+                <td class="${deudaCellClass}">${formatCurrency(deuda)}</td>
+                <td>${formatDate(prop.contrato.fin)}</td>
+                <td class="actions-cell">
+                    <button class="btn btn-info btn-sm btn-details" data-id="${prop.id}" title="Ver Detalles"><i class="fas fa-eye"></i></button>
+                    <button class="btn btn-success btn-sm btn-payment" data-id="${prop.id}" title="Registrar Pago"><i class="fas fa-dollar-sign"></i></button>
+                    <button class="btn btn-secondary btn-sm btn-edit" data-id="${prop.id}" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn-danger btn-sm btn-delete" data-id="${prop.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tablaPropiedadesBody.appendChild(row);
+        });
+        actualizarResumen();
+    };
+
+    const renderizarDetalles = (prop) => {
+        const totalServicios = Object.values(prop.servicios).reduce((sum, val) => sum + parseFloat(val || 0), 0);
+        let pagosHtml = '<tr><td colspan="3" style="text-align:center;">Sin pagos registrados.</td></tr>';
+        if (prop.pagos.length > 0) {
+            pagosHtml = [...prop.pagos].reverse().map(p => `
+                <tr>
+                    <td>${formatDate(p.fecha)}</td>
+                    <td>${p.concepto}</td>
+                    <td>${formatCurrency(p.monto)}</td>
+                </tr>
+            `).join('');
+        }
+
+        const content = `
+            <div class="details-section">
+                <h4><i class="fas fa-map-marker-alt"></i> Propiedad</h4>
+                <div class="details-grid">
+                    <div class="detail-item"><span class="label">Dirección</span><span class="value">${prop.direccion}</span></div>
+                    <div class="detail-item"><span class="label">Tipo</span><span class="value">${prop.tipo}</span></div>
+                </div>
+            </div>
+            <div class="details-section">
+                <h4><i class="fas fa-user"></i> Inquilino</h4>
+                <div class="details-grid">
+                    <div class="detail-item"><span class="label">Nombre</span><span class="value">${prop.inquilino.nombre}</span></div>
+                    <div class="detail-item"><span class="label">DNI</span><span class="value">${prop.inquilino.dni}</span></div>
+                    <div class="detail-item"><span class="label">Teléfono</span><span class="value">${prop.inquilino.tel}</span></div>
+                    <div class="detail-item"><span class="label">Email</span><span class="value">${prop.inquilino.email}</span></div>
+                </div>
+            </div>
+            <div class="details-section">
+                <h4><i class="fas fa-file-contract"></i> Contrato y Valores</h4>
+                <div class="details-grid">
+                    <div class="detail-item"><span class="label">Inicio</span><span class="value">${formatDate(prop.contrato.inicio)}</span></div>
+                    <div class="detail-item"><span class="label">Fin</span><span class="value">${formatDate(prop.contrato.fin)}</span></div>
+                    <div class="detail-item"><span class="label">Alquiler Base</span><span class="value">${formatCurrency(prop.contrato.alquilerBase)}</span></div>
+                    <div class="detail-item"><span class="label">Servicios</span><span class="value">${formatCurrency(totalServicios)}</span></div>
+                    <div class="detail-item"><span class="label">Total Mensual</span><span class="value font-weight-bold" style="color:var(--accent-orange);">${formatCurrency(parseFloat(prop.contrato.alquilerBase) + totalServicios)}</span></div>
+                </div>
+            </div>
+            <div class="details-section">
+                <h4><i class="fas fa-receipt"></i> Historial de Pagos</h4>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th></tr></thead>
+                        <tbody>${pagosHtml}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        document.getElementById('details-address').textContent = prop.direccion;
+        document.getElementById('details-content').innerHTML = content;
+        openModal(detailsModal);
+    };
+
+    // --- LÓGICA CRUD Y ACCIONES ---
+    document.getElementById('form-propiedad').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('prop-id').value;
+        const propData = {
+            direccion: document.getElementById('prop-direccion').value,
+            tipo: document.getElementById('prop-tipo').value,
+            inquilino: {
+                nombre: document.getElementById('inq-nombre').value,
+                dni: document.getElementById('inq-dni').value,
+                tel: document.getElementById('inq-tel').value,
+                email: document.getElementById('inq-email').value,
+            },
+            contrato: {
+                inicio: document.getElementById('cont-inicio').value,
+                fin: document.getElementById('cont-fin').value,
+                alquilerBase: document.getElementById('val-alquiler').value,
+            },
+            servicios: {
+                expensas: document.getElementById('serv-expensas').value,
+                agua: document.getElementById('serv-agua').value,
+                luz: document.getElementById('serv-luz').value,
+                gas: document.getElementById('serv-gas').value,
+                municipal: document.getElementById('serv-municipal').value,
+            }
+        };
+
+        if (id) { // Editar
+            const index = propiedades.findIndex(p => p.id == id);
+            propiedades[index] = { ...propiedades[index], ...propData };
+        } else { // Crear
+            propData.id = Date.now();
+            propData.pagos = [];
+            propiedades.push(propData);
+        }
+        
+        renderizarTabla();
+        guardarDatos();
+        closeModal(propertyModal);
+    });
+
+    document.getElementById('form-payment').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const propId = document.getElementById('payment-prop-id').value;
+        const prop = propiedades.find(p => p.id == propId);
+        if (prop) {
+            prop.pagos.push({
+                id: Date.now(),
+                fecha: document.getElementById('payment-date').value,
+                monto: document.getElementById('payment-amount').value,
+                concepto: document.getElementById('payment-concept').value,
+            });
+            renderizarTabla();
+            guardarDatos();
+            closeModal(paymentModal);
+        }
+    });
+
+    tablaPropiedadesBody.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+        
+        const id = target.dataset.id;
+        const prop = propiedades.find(p => p.id == id);
+
+        if (target.classList.contains('btn-edit')) {
+            document.getElementById('prop-id').value = prop.id;
+            document.getElementById('modal-title').textContent = 'Editar Propiedad';
+            document.getElementById('prop-direccion').value = prop.direccion;
+            document.getElementById('prop-tipo').value = prop.tipo;
+            document.getElementById('inq-nombre').value = prop.inquilino.nombre;
+            document.getElementById('inq-dni').value = prop.inquilino.dni;
+            document.getElementById('inq-tel').value = prop.inquilino.tel;
+            document.getElementById('inq-email').value = prop.inquilino.email;
+            document.getElementById('cont-inicio').value = prop.contrato.inicio;
+            document.getElementById('cont-fin').value = prop.contrato.fin;
+            document.getElementById('val-alquiler').value = prop.contrato.alquilerBase;
+            document.getElementById('serv-expensas').value = prop.servicios.expensas;
+            document.getElementById('serv-agua').value = prop.servicios.agua;
+            document.getElementById('serv-luz').value = prop.servicios.luz;
+            document.getElementById('serv-gas').value = prop.servicios.gas;
+            document.getElementById('serv-municipal').value = prop.servicios.municipal;
+            openModal(propertyModal);
+        }
+        else if (target.classList.contains('btn-delete')) {
+            if (confirm(`¿Estás seguro de que quieres eliminar la propiedad "${prop.direccion}"? Esta acción no se puede deshacer.`)) {
+                propiedades = propiedades.filter(p => p.id != id);
+                renderizarTabla();
+                guardarDatos();
+            }
+        }
+        else if (target.classList.contains('btn-payment')) {
+            document.getElementById('form-payment').reset();
+            document.getElementById('payment-prop-id').value = prop.id;
+            document.getElementById('payment-prop-address').textContent = prop.direccion;
+            document.getElementById('payment-date').valueAsDate = new Date();
+            openModal(paymentModal);
+        }
+        else if (target.classList.contains('btn-details')) {
+            renderizarDetalles(prop);
+        }
+    });
+
+    // --- PERSISTENCIA DE DATOS (LocalStorage) ---
+    const guardarDatos = () => {
+        localStorage.setItem('propiedadesData', JSON.stringify(propiedades));
+    };
+
+    const cargarDatos = () => {
+        const datosGuardados = localStorage.getItem('propiedadesData');
+        if (datosGuardados) {
+            propiedades = JSON.parse(datosGuardados);
+        } else {
+            // Cargar datos de ejemplo si no hay nada guardado
+            propiedades = [
+                {
+                    id: 1, direccion: 'Calle Falsa 123, Piso 2, Depto A', tipo: 'Departamento',
+                    inquilino: { nombre: 'Juan Pérez', dni: '30.123.456', tel: '11-5555-1234', email: 'juan.perez@email.com' },
+                    contrato: { inicio: '2023-01-15', fin: '2025-01-14', alquilerBase: '180000' },
+                    servicios: { expensas: '22000', agua: '2800', luz: '4500', gas: '3200', municipal: '2100' },
+                    pagos: [
+                        {id: 101, fecha: '2024-07-05', monto: '214600', concepto: 'Alquiler y servicios Julio'}
+                    ]
+                },
+                {
+                    id: 2, direccion: 'Av. Libertador 5500', tipo: 'Casa',
+                    inquilino: { nombre: 'María García', dni: '28.789.012', tel: '11-4444-5678', email: 'maria.g@email.com' },
+                    contrato: { inicio: '2022-08-01', fin: '2024-07-31', alquilerBase: '250000' },
+                    servicios: { expensas: '0', agua: '4000', luz: '6500', gas: '5500', municipal: '3500' },
+                    pagos: []
+                }
+            ];
+        }
+    };
+
+    // --- CONFIGURACIÓN DE MARCA ---
+    const brandLogo = document.getElementById('brand-logo');
+    const brandName1 = document.getElementById('brand-name-part1');
+    const brandName2 = document.getElementById('brand-name-part2');
+    const footerName1 = document.getElementById('footer-brand-name1');
+    const footerName2 = document.getElementById('footer-brand-name2');
+    const configName1Input = document.getElementById('config-name1');
+    const configName2Input = document.getElementById('config-name2');
+    const configLogoInput = document.getElementById('config-logo');
+
+    const guardarConfig = () => {
+        localStorage.setItem('brandConfig', JSON.stringify({
+            name1: brandName1.textContent,
+            name2: brandName2.textContent,
+            logoSrc: brandLogo.src
+        }));
+    };
+
+    const cargarConfig = () => {
+        const config = JSON.parse(localStorage.getItem('brandConfig')) || { name1: 'GESTIÓN', name2: 'EXCEL', logoSrc: 'https://lh3.googleusercontent.com/d/1C8I9niDfbEZDPp6-XmEx8Q2FdUhoPmoG' };
+        brandName1.textContent = config.name1;
+        brandName2.textContent = config.name2;
+        footerName1.textContent = config.name1;
+        footerName2.textContent = config.name2;
+        brandLogo.src = config.logoSrc;
+        configName1Input.value = config.name1;
+        configName2Input.value = config.name2;
+    };
+
+    configName1Input.addEventListener('input', (e) => { brandName1.textContent = e.target.value; footerName1.textContent = e.target.value; guardarConfig(); });
+    configName2Input.addEventListener('input', (e) => { brandName2.textContent = e.target.value; footerName2.textContent = e.target.value; guardarConfig(); });
+    configLogoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => { brandLogo.src = event.target.result; guardarConfig(); };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // --- INICIALIZACIÓN DEL SISTEMA ---
+    const inicializar = () => {
+        cargarConfig();
+        cargarDatos();
+        renderizarTabla();
+    };
+
+    inicializar();
+});
+</script>
+
+</body>
+</html>
