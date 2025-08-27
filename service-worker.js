@@ -1,19 +1,3 @@
-self.addEventListener("install", e => {
-  e.waitUntil(
-    caches.open("app").then(cache => {
-      return cache.addAll([
-        "./",
-        "./index.html",
-        "./manifest.json",
-        "./service-worker.js",
-        "./icon-192.png",
-        "./icon-512.png"
-      ]);
-    })
-  );
-});
-self.addEventListener("fetch", e => {
-  e.respondWith(
-    caches.match(e.request).then(response => response || fetch(e.request))
-  );
-});
+self.addEventListener('install', (e)=>{ self.skipWaiting(); });
+self.addEventListener('activate', (e)=>{ self.clients.claim(); });
+self.addEventListener('fetch', (e)=>{ /* passthrough */ });
