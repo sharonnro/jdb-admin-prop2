@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JDB - Admin Props</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e1b26"/>
+  <style>
+    :root { --bg-main:#1e1b26; --bg-panel:#2a263d; --accent:#dbaff8;
+            --text:#ffffff; --text-2:#c3c3c3; --border:#4a4a6a; --ok:#28a745; --err:#dc3545; --info:#17a2b8;
+            --font:'Roboto',sans-serif; --font-logo:'Anton',sans-serif; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font);background:var(--bg-main);color:var(--text);display:flex;height:100vh;overflow:hidden}
+    .sidebar{width:260px;background:var(--bg-panel);padding:1.5rem 1rem;display:flex;flex-direction:column;position:fixed;height:100%;border-right:1px solid var(--border);z-index:10}
+    .main{flex:1;margin-left:260px;padding:2rem;overflow:auto;height:100vh}
+    .brand{text-align:center;margin-bottom:2rem}
+    .brand img{width:100px;height:100px;border-radius:50%;border:3px solid var(--accent);object-fit:cover;margin-bottom:.75rem}
+    .brand .n1{font-family:var(--font-logo);font-size:2.1rem;line-height:1}
+    .brand .n2{font-weight:700;color:var(--accent);letter-spacing:1px}
+    nav ul{list-style:none}
+    nav a{display:flex;gap:.75rem;align-items:center;padding:.8rem 1rem;border-radius:8px;margin-bottom:.4rem;color:var(--text-2);text-decoration:none;transition:.2s}
+    nav a:hover{background:rgba(219,175,248,.1);color:var(--text)}
+    nav a.active{background:var(--accent);color:var(--bg-panel);font-weight:700}
+    .foot{margin-top:auto;text-align:center;color:var(--text-2);font-size:.85rem}
+    .panel{display:none}
+    .panel.active{display:block;animation:fade .3s ease-out}
+    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .card{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+    .card .ch{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1rem}
+    .card .ch h2{font-family:var(--font-logo);color:var(--accent);letter-spacing:.5px}
+    .btn{border:none;border-radius:8px;padding:.6rem 1rem;font-weight:700;cursor:pointer;display:inline-flex;gap:.45rem;align-items:center;transition:transform .15s, box-shadow .15s}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+    .primary{background:var(--accent);color:var(--bg-panel)}
+    .danger{background:var(--err);color:var(--text)}
+    .ok{background:var(--ok);color:var(--text)}
+    .info{background:var(--info);color:var(--text)}
+    table{width:100%;border-collapse:collapse}
+    thead th{color:var(--accent);text-align:left;padding:1rem;font-size:.9rem;border-bottom:2px solid var(--accent);text-transform:uppercase;letter-spacing:.4px}
+    tbody td{padding:1rem;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:middle}
+    tbody tr:hover{background:rgba(42,38,61,.75)}
+    tbody td:first-child{color:var(--text);font-weight:500}
+    .actions{display:flex;gap:.4rem}
+    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+    .kpi .item{background:var(--bg-panel);border:1px solid var(--border);border-left:5px solid var(--accent);border-radius:12px;padding:1rem;display:flex;gap:1rem;align-items:center}
+    .kpi .icon{font-size:2rem;color:var(--accent)}
+    .kpi .val{font-size:1.6rem;font-weight:800}
+    .kpi .lab{color:var(--text-2);font-size:.9rem}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:20}
+    .modal.active{display:flex}
+    .modal .box{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.25rem;max-height:90vh;overflow:auto;width:95%;max-width:900px}
+    .mb{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.6rem}
+    .mb h3{font-family:var(--font-logo);color:var(--accent)}
+    .close{background:none;border:none;color:var(--text-2);font-size:1.4rem;cursor:pointer}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+    .fg{display:flex;flex-direction:column}
+    .fg label{color:var(--text-2);margin-bottom:.35rem;font-size:.9rem}
+    .fg input,.fg select{background:var(--bg-main);border:2px solid var(--border);color:var(--text);padding:.7rem;border-radius:8px}
+    .sec{font-size:1.05rem;color:var(--accent);margin:.8rem 0 .5rem;border-bottom:1px solid var(--border);padding-bottom:.35rem}
+    @media (max-width:768px){ body{flex-direction:column;overflow:auto} .sidebar{position:relative;width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border);flex-direction:row;flex-wrap:wrap;justify-content:space-around}
+      .main{margin-left:0;padding:1rem} table{font-size:.92rem} }
+  </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    }
+  </script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <img id="brand-logo" src="icon-512.png" alt="Logo">
+      <div class="n1" id="brand-n1">JDB</div>
+      <div class="n2" id="brand-n2">ADMIN PROPS</div>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="#" class="active" data-target="p-resumen"><i class="fas fa-gauge"></i> Resumen</a></li>
+        <li><a href="#" data-target="p-props"><i class="fas fa-building"></i> Propiedades</a></li>
+        <li><a href="#" data-target="p-config"><i class="fas fa-cog"></i> Configuración</a></li>
+      </ul>
+    </nav>
+    <div class="foot"><span id="foot1">JDB</span> <span style="color:var(--accent)" id="foot2">ADMIN PROPS</span></div>
+  </aside>
+
+  <main class="main">
+    <!-- RESUMEN -->
+    <section class="panel active" id="p-resumen">
+      <div class="card">
+        <div class="ch"><h2><i class="fas fa-chart-line"></i> Panel de Control</h2></div>
+        <div class="kpi">
+          <div class="item"><div class="icon"><i class="fas fa-city"></i></div><div><div class="val" id="kpi-total">0</div><div class="lab">Total de Propiedades</div></div></div>
+          <div class="item"><div class="icon"><i class="fas fa-file-signature"></i></div><div><div class="val" id="kpi-alquiladas">0</div><div class="lab">Propiedades Alquiladas</div></div></div>
+          <div class="item"><div class="icon"><i class="fas fa-hand-holding-dollar"></i></div><div><div class="val" id="kpi-ingresos">AR$ 0</div><div class="lab">Ingresos del Mes</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROPIEDADES -->
+    <section class="panel" id="p-props">
+      <div class="card">
+        <div class="ch">
+          <h2><i class="fas fa-list-ul"></i> Listado de Propiedades</h2>
+          <button class="btn primary" id="btn-add"><i class="fas fa-plus"></i> Agregar Propiedad</button>
+        </div>
+        <div class="table-container">
+          <table id="tabla">
+            <thead>
+              <tr>
+                <th>Dirección</th>
+                <th>Piso y letra/nro</th>
+                <th>Inquilino</th>
+                <th>Alquiler</th>
+                <th>Expensas aproximadas</th>
+                <th>Inicio Contrato</th>
+                <th>Fin Contrato</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section class="panel" id="p-config">
+      <div class="card">
+        <div class="ch"><h2><i class="fas fa-paint-brush"></i> Personalización de Marca</h2></div>
+        <div class="grid">
+          <div class="fg"><label for="cfg-n1">Nombre Principal</label><input id="cfg-n1" placeholder="JDB"/></div>
+          <div class="fg"><label for="cfg-n2">Nombre Secundario</label><input id="cfg-n2" placeholder="ADMIN PROPS"/></div>
+          <div class="fg"><label for="cfg-logo">Cambiar Logo</label><input type="file" id="cfg-logo" accept="image/*"/></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL PROP -->
+  <div class="modal" id="m-prop">
+    <div class="box">
+      <div class="mb"><h3 id="m-title">Agregar Nueva Propiedad</h3><button class="close" data-close>×</button></div>
+      <form id="f-prop">
+        <input type="hidden" id="prop-id"/>
+        <div class="sec">Datos de la Propiedad</div>
+        <div class="grid">
+          <div class="fg"><label for="prop-dir">Dirección</label><input id="prop-dir" required/></div>
+          <div class="fg"><label for="prop-piso">Piso y letra/nro</label><input id="prop-piso" placeholder="Piso 2 - Depto A"/></div>
+          <div class="fg"><label for="prop-tipo">Tipo</label>
+            <select id="prop-tipo">
+              <option>Departamento</option><option>Casa</option><option>Local</option><option>Oficina</option>
+            </select>
+          </div>
+          <div class="fg"><label for="prop-exp">Expensas aproximadas (AR$)</label><input type="number" id="prop-exp" value="0"/></div>
+          <div class="fg"><label for="prop-admin-nom">Nombre de administración</label><input id="prop-admin-nom"/></div>
+          <div class="fg"><label for="prop-admin-contacto">Contacto de administración</label><input id="prop-admin-contacto" placeholder="Teléfono / Email"/></div>
+        </div>
+
+        <div class="sec">Datos del Inquilino</div>
+        <div class="grid">
+          <div class="fg"><label for="inq-nom">Nombre Completo</label><input id="inq-nom"/></div>
+          <div class="fg"><label for="inq-dni">DNI</label><input id="inq-dni"/></div>
+          <div class="fg"><label for="inq-tel">Teléfono</label><input id="inq-tel"/></div>
+          <div class="fg"><label for="inq-mail">Email</label><input type="email" id="inq-mail"/></div>
+        </div>
+
+        <div class="sec">Datos del Contrato</div>
+        <div class="grid">
+          <div class="fg"><label for="cont-inicio">Inicio</label><input type="date" id="cont-inicio"/></div>
+          <div class="fg"><label for="cont-fin">Fin</label><input type="date" id="cont-fin"/></div>
+          <div class="fg"><label for="cont-alq">Alquiler Base (AR$)</label><input type="number" id="cont-alq"/></div>
+          <div class="fg"><label for="cont-aum">Tipo de aumento</label><input id="cont-aum" placeholder="Ej: trimestral por índice"/></div>
+          <div class="fg"><label for="cont-gar">Garantía</label><input id="cont-gar" placeholder="Tipo y datos"/></div>
+          <div class="fg"><label for="cont-hand">Handler</label><input id="cont-hand" placeholder="Persona responsable"/></div>
+        </div>
+
+        <div class="sec">Servicios y número de cliente (AR$)</div>
+        <div class="grid">
+          <div class="fg"><label for="srv-arba">Arba</label><input type="number" id="srv-arba" value="0"/></div>
+          <div class="fg"><label for="srv-agua">Agua</label><input type="number" id="srv-agua" value="0"/></div>
+          <div class="fg"><label for="srv-luz">Luz</label><input type="number" id="srv-luz" value="0"/></div>
+          <div class="fg"><label for="srv-gas">Gas</label><input type="number" id="srv-gas" value="0"/></div>
+          <div class="fg"><label for="srv-muni">Municipal</label><input type="number" id="srv-muni" value="0"/></div>
+          <div class="fg"><label for="srv-nro">Nro. de cliente (opcional)</label><input id="srv-nro" placeholder="Código de cliente"/></div>
+        </div>
+
+        <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:1rem">
+          <button type="button" class="btn" data-close>Cancelar</button>
+          <button class="btn primary" type="submit"><i class="fas fa-save"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PAGO -->
+  <div class="modal" id="m-pago">
+    <div class="box" style="max-width:520px">
+      <div class="mb"><h3>Registrar Pago</h3><button class="close" data-close>×</button></div>
+      <form id="f-pago">
+        <input type="hidden" id="pay-id"/>
+        <p style="color:var(--text-2);margin:.5rem 0 1rem">Registrando pago para: <strong id="pay-dir" style="color:var(--text)"></strong></p>
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div class="fg"><label for="pay-monto">Monto (AR$)</label><input id="pay-monto" type="number" required/></div>
+          <div class="fg"><label for="pay-fecha">Fecha de Pago</label><input id="pay-fecha" type="date" required/></div>
+        </div>
+        <div class="fg"><label for="pay-concepto">Concepto</label><input id="pay-concepto" placeholder="Ej: Alquiler Julio, Pago parcial servicios" required/></div>
+        <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:1rem">
+          <button type="button" class="btn" data-close>Cancelar</button>
+          <button class="btn ok" type="submit"><i class="fas fa-check"></i> Registrar Pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLES -->
+  <div class="modal" id="m-det">
+    <div class="box">
+      <div class="mb"><h3 id="det-title">Detalles de la Propiedad</h3><button class="close" data-close>×</button></div>
+      <div id="det-body"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:1rem">
+        <button type="button" class="btn" data-close>Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  let props = [];
+
+  const $ = (q, p=document) => p.querySelector(q);
+  const $$ = (q, p=document) => [...p.querySelectorAll(q)];
+
+  // NAV
+  $$(".sidebar nav a").forEach(a => {
+    a.addEventListener("click", e => {
+      e.preventDefault();
+      $$(".sidebar nav a").forEach(x => x.classList.remove("active"));
+      a.classList.add("active");
+      const tgt = a.getAttribute("data-target");
+      $$(".panel").forEach(p => p.classList.remove("active"));
+      $("#"+tgt).classList.add("active");
+    });
+  });
+
+  // MODALS
+  const open = id => $(id).classList.add("active");
+  const close = id => $(id).classList.remove("active");
+  $$("[data-close]").forEach(btn => btn.addEventListener("click", () => {
+    btn.closest(".modal").classList.remove("active");
+  }));
+  $$(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m) m.classList.remove("active"); }));
+
+  // KPI
+  const fmtMoney = v => new Intl.NumberFormat('es-AR', {style:'currency',currency:'ARS'}).format(+v || 0);
+  const fmtDate = s => s ? new Date(s+"T00:00:00").toLocaleDateString('es-AR') : "N/A";
+  const updateKPI = () => {
+    $("#kpi-total").textContent = props.length;
+    $("#kpi-alquiladas").textContent = props.filter(p => (p.inq && p.inq.nom)).length;
+    const now = new Date();
+    const mm = now.getMonth(), yy = now.getFullYear();
+    const ingreso = props.flatMap(p => p.pagos || []).filter(pg => {
+      const d = new Date(pg.fecha+"T00:00:00");
+      return d.getMonth()===mm && d.getFullYear()===yy;
+    }).reduce((s,pg) => s + (+pg.monto||0), 0);
+    $("#kpi-ingresos").textContent = fmtMoney(ingreso);
+  };
+
+  // TABLE
+  const tbody = $("#tabla tbody");
+  const renderTable = () => {
+    tbody.innerHTML = "";
+    props.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>"+(p.dir||"")+"</td>"+
+        "<td>"+(p.piso||"")+"</td>"+
+        "<td>"+(p.inq?.nom || "Sin inquilino")+"</td>"+
+        "<td>"+fmtMoney(p.cont?.alq)+"</td>"+
+        "<td>"+fmtMoney(p.exp)+"</td>"+
+        "<td>"+fmtDate(p.cont?.ini)+"</td>"+
+        "<td>"+fmtDate(p.cont?.fin)+"</td>"+
+        `<td class="actions">
+           <button class="btn info btn-det" data-id="${p.id}"><i class="fas fa-eye"></i></button>
+           <button class="btn ok btn-pay" data-id="${p.id}"><i class="fas fa-dollar-sign"></i></button>
+           <button class="btn btn-ed" data-id="${p.id}"><i class="fas fa-pen"></i></button>
+           <button class="btn danger btn-del" data-id="${p.id}"><i class="fas fa-trash"></i></button>
+         </td>`;
+      tbody.appendChild(tr);
+    });
+    updateKPI();
+  };
+
+  // STORAGE
+  const save = () => localStorage.setItem("jdb_props", JSON.stringify(props));
+  const load = () => {
+    try { props = JSON.parse(localStorage.getItem("jdb_props")) || []; } catch { props = []; }
+    if (!props.length) {
+      // seed example respecting columns
+      props = [{
+        id: 1,
+        dir: "Calle Falsa 123",
+        piso: "Piso 2 - Depto A",
+        tipo: "Departamento",
+        exp: 22000,
+        admin: {nom:"Admin ABC", contacto:"admin@abc.com"},
+        inq: {nom:"Juan Pérez", dni:"30123456", tel:"11-5555-1234", mail:"juan@correo.com"},
+        cont: {ini:"2023-01-15", fin:"2025-01-14", alq:180000, aum:"Trimestral por índice", gar:"Propietaria", hand:"JDB"},
+        srv: {arba:3000, agua:2800, luz:4500, gas:3200, muni:2100, nro:"A1B2"},
+        pagos: [{id:1001, fecha:"2025-08-05", monto:214600, concepto:"Alquiler y servicios Agosto"}]
+      }];
+      save();
+    }
+  };
+
+  // ADD / EDIT
+  $("#btn-add").addEventListener("click", () => {
+    $("#f-prop").reset();
+    $("#prop-id").value = "";
+    $("#m-title").textContent = "Agregar Nueva Propiedad";
+    open("#m-prop");
+  });
+
+  $("#f-prop").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const id = $("#prop-id").value;
+    const data = {
+      dir: $("#prop-dir").value,
+      piso: $("#prop-piso").value,
+      tipo: $("#prop-tipo").value,
+      exp: $("#prop-exp").value,
+      admin: { nom: $("#prop-admin-nom").value, contacto: $("#prop-admin-contacto").value },
+      inq: { nom: $("#inq-nom").value, dni: $("#inq-dni").value, tel: $("#inq-tel").value, mail: $("#inq-mail").value },
+      cont: {
+        ini: $("#cont-inicio").value, fin: $("#cont-fin").value,
+        alq: $("#cont-alq").value, aum: $("#cont-aum").value, gar: $("#cont-gar").value, hand: $("#cont-hand").value
+      },
+      srv: {
+        arba: $("#srv-arba").value, agua: $("#srv-agua").value, luz: $("#srv-luz").value,
+        gas: $("#srv-gas").value, muni: $("#srv-muni").value, nro: $("#srv-nro").value
+      }
+    };
+    if (id) {
+      const i = props.findIndex(x => String(x.id) === String(id));
+      props[i] = Object.assign({}, props[i], data);
+    } else {
+      data.id = Date.now();
+      data.pagos = [];
+      props.push(data);
+    }
+    renderTable(); save(); close("#m-prop");
+  });
+
+  // ROW ACTIONS
+  tbody.addEventListener("click", (e) => {
+    const btn = e.target.closest("button"); if (!btn) return;
+    const id = btn.getAttribute("data-id");
+    const p = props.find(x => String(x.id) === String(id));
+    if (!p) return;
+
+    if (btn.classList.contains("btn-ed")) {
+      $("#m-title").textContent = "Editar Propiedad";
+      $("#prop-id").value = p.id;
+      $("#prop-dir").value = p.dir || "";
+      $("#prop-piso").value = p.piso || "";
+      $("#prop-tipo").value = p.tipo || "Departamento";
+      $("#prop-exp").value = p.exp || 0;
+      $("#prop-admin-nom").value = p.admin?.nom || "";
+      $("#prop-admin-contacto").value = p.admin?.contacto || "";
+      $("#inq-nom").value = p.inq?.nom || "";
+      $("#inq-dni").value = p.inq?.dni || "";
+      $("#inq-tel").value = p.inq?.tel || "";
+      $("#inq-mail").value = p.inq?.mail || "";
+      $("#cont-inicio").value = p.cont?.ini || "";
+      $("#cont-fin").value = p.cont?.fin || "";
+      $("#cont-alq").value = p.cont?.alq || 0;
+      $("#cont-aum").value = p.cont?.aum || "";
+      $("#cont-gar").value = p.cont?.gar || "";
+      $("#cont-hand").value = p.cont?.hand || "";
+      $("#srv-arba").value = p.srv?.arba || 0;
+      $("#srv-agua").value = p.srv?.agua || 0;
+      $("#srv-luz").value = p.srv?.luz || 0;
+      $("#srv-gas").value = p.srv?.gas || 0;
+      $("#srv-muni").value = p.srv?.muni || 0;
+      $("#srv-nro").value = p.srv?.nro || "";
+      open("#m-prop");
+    }
+    else if (btn.classList.contains("btn-del")) {
+      if (confirm(`¿Eliminar la propiedad "${p.dir}"?`)) {
+        props = props.filter(x => String(x.id) !== String(id));
+        renderTable(); save();
+      }
+    }
+    else if (btn.classList.contains("btn-pay")) {
+      $("#f-pago").reset();
+      $("#pay-id").value = p.id;
+      $("#pay-dir").textContent = p.dir;
+      $("#pay-fecha").valueAsDate = new Date();
+      open("#m-pago");
+    }
+    else if (btn.classList.contains("btn-det")) {
+      const servTotal = Object.values(p.srv || {}).reduce((s,v)=> s + (+v || 0), 0);
+      const pagos = (p.pagos || []).slice().reverse();
+      let pagosRows = '<tr><td colspan="3" style="text-align:center;color:var(--text-2)">Sin pagos registrados</td></tr>';
+      if (pagos.length) {
+        pagosRows = pagos.map(pg => `<tr><td>${fmtDate(pg.fecha)}</td><td>${pg.concepto}</td><td>${fmtMoney(pg.monto)}</td></tr>`).join("");
+      }
+      const html = `
+        <div class="sec">Propiedad</div>
+        <div class="grid">
+          <div class="fg"><label>Dirección</label><div>${p.dir||""}</div></div>
+          <div class="fg"><label>Piso/Letra</label><div>${p.piso||""}</div></div>
+          <div class="fg"><label>Tipo</label><div>${p.tipo||""}</div></div>
+          <div class="fg"><label>Expensas aprox.</label><div>${fmtMoney(p.exp)}</div></div>
+          <div class="fg"><label>Administración</label><div>${p.admin?.nom||""}</div></div>
+          <div class="fg"><label>Contacto Adm.</label><div>${p.admin?.contacto||""}</div></div>
+        </div>
+        <div class="sec">Inquilino</div>
+        <div class="grid">
+          <div class="fg"><label>Nombre</label><div>${p.inq?.nom||""}</div></div>
+          <div class="fg"><label>DNI</label><div>${p.inq?.dni||""}</div></div>
+          <div class="fg"><label>Teléfono</label><div>${p.inq?.tel||""}</div></div>
+          <div class="fg"><label>Email</label><div>${p.inq?.mail||""}</div></div>
+        </div>
+        <div class="sec">Contrato y Valores</div>
+        <div class="grid">
+          <div class="fg"><label>Inicio</label><div>${fmtDate(p.cont?.ini)}</div></div>
+          <div class="fg"><label>Fin</label><div>${fmtDate(p.cont?.fin)}</div></div>
+          <div class="fg"><label>Alquiler Base</label><div>${fmtMoney(p.cont?.alq)}</div></div>
+          <div class="fg"><label>Tipo de aumento</label><div>${p.cont?.aum||""}</div></div>
+          <div class="fg"><label>Garantía</label><div>${p.cont?.gar||""}</div></div>
+          <div class="fg"><label>Handler</label><div>${p.cont?.hand||""}</div></div>
+          <div class="fg"><label>Servicios</label><div>${fmtMoney(servTotal)}</div></div>
+          <div class="fg"><label>Total Mensual</label><div style="color:var(--accent);font-weight:700">${fmtMoney((+p.cont?.alq||0)+servTotal)}</div></div>
+        </div>
+        <div class="sec">Historial de Pagos</div>
+        <div class="table-container"><table>
+          <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th></tr></thead>
+          <tbody>${pagosRows}</tbody>
+        </table></div>
+      `;
+      $("#det-title").textContent = p.dir || "Detalles de la Propiedad";
+      $("#det-body").innerHTML = html;
+      open("#m-det");
+    }
+  });
+
+  // PAGOS
+  $("#f-pago").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const id = $("#pay-id").value;
+    const p = props.find(x => String(x.id) === String(id));
+    if (!p) return;
+    p.pagos = p.pagos || [];
+    p.pagos.push({ id: Date.now(), fecha: $("#pay-fecha").value, monto: $("#pay-monto").value, concepto: $("#pay-concepto").value });
+    renderTable(); save(); close("#m-pago");
+  });
+
+  // BRAND CONFIG
+  const applyBrand = (cfg) => {
+    $("#brand-n1").textContent = cfg.n1 || "JDB";
+    $("#brand-n2").textContent = cfg.n2 || "ADMIN PROPS";
+    $("#foot1").textContent = $("#brand-n1").textContent;
+    $("#foot2").textContent = $("#brand-n2").textContent;
+    if (cfg.logo) $("#brand-logo").src = cfg.logo;
+  };
+  const saveBrand = (cfg) => localStorage.setItem("jdb_brand", JSON.stringify(cfg));
+  const loadBrand = () => {
+    let cfg = { n1:"JDB", n2:"ADMIN PROPS", logo:"icon-512.png" };
+    try { cfg = Object.assign(cfg, JSON.parse(localStorage.getItem("jdb_brand")||"{}")); } catch {}
+    applyBrand(cfg);
+    $("#cfg-n1").value = cfg.n1;
+    $("#cfg-n2").value = cfg.n2;
+  };
+  $("#cfg-n1").addEventListener("input", e => { const cfg = JSON.parse(localStorage.getItem("jdb_brand")||"{}"); cfg.n1 = e.target.value; saveBrand(cfg); applyBrand(cfg); });
+  $("#cfg-n2").addEventListener("input", e => { const cfg = JSON.parse(localStorage.getItem("jdb_brand")||"{}"); cfg.n2 = e.target.value; saveBrand(cfg); applyBrand(cfg); });
+  $("#cfg-logo").addEventListener("change", e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => { const cfg = JSON.parse(localStorage.getItem("jdb_brand")||"{}"); cfg.logo = ev.target.result; saveBrand(cfg); applyBrand(cfg); };
+    r.readAsDataURL(f);
+  });
+
+  // INIT
+  loadBrand(); load(); renderTable();
+})();
+</script>
+
+</body>
+</html>
